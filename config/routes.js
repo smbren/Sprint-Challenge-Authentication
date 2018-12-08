@@ -2,9 +2,7 @@ require('dotenv').config();
 
 const axios = require('axios');
 const bcrypt = require('bcryptjs');
-const jwtKey = require('jsonwebtoken');
-
-const secret = require('../_secrets/keys');
+const jwt = require('jsonwebtoken');
 
 const db = require('../database/dbConfig.js');
 
@@ -38,10 +36,12 @@ function generateToken(user) {
     username: user.username,
     
   }
-  const secret = jwtKey;
+  const jwtKey = 'Why can’t banks keep secrets? There are too many tellers!';
   const options = {
     expiresIn: '30m',
   };
+
+  return jwt.sign(payload, jwtKey, options);
 }
 
 function login(req, res) {
