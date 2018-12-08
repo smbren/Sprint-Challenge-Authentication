@@ -1,4 +1,12 @@
+require('dotenv').config();
+
 const axios = require('axios');
+const bcrypt = require('bcryptjs');
+const jwtKey = require('jsonwebtoken');
+
+const secret = require('../_secrets/keys');
+
+const db = require('../database/dbConfig.js');
 
 const { authenticate } = require('./middlewares');
 
@@ -9,11 +17,51 @@ module.exports = server => {
 };
 
 function register(req, res) {
-  // implement user registration
+
+  const creds = req.body;
+  const hash = bcrypt.hashSync(creds.password, 16);
+  
+  creds.password = hash;
+
+  db('users')
+    .insert(creds)
+    .then(ids => { 
+      res.status(201).json(ids);
+    })
+    .catch(err => res.json(err));
+
+}
+
+function generateToken(user) {
+  const payload = {
+    subject: user.id,
+    username: user.username,
+    
+  }
+  const secret = jwtKey;
+  const options = {
+    expiresIn: '30m',
+  };
 }
 
 function login(req, res) {
-  // implement user login
+
+  const creds = req.body;
+
+  db('users')
+    .where({ username: creds.username })
+    .first().then(user => {
+
+      if( user && bcrypt.compareSync(creds.password, user.password)) {
+        const token = generateToken(user);
+        res.status(200).json({ message: 'welcome!', token});
+      } else {
+        res.status(401).json({ message: 'Username or Password is invalid.'});
+      }
+
+  })
+  .catch(err => res.json(err));
+
 }
 
 function getJokes(req, res) {
